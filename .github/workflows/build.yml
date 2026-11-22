@@ -1,0 +1,54 @@
+name: Build
+
+'on':
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_RUSTC_WRAPPER: ""
+
+jobs:
+  build:
+    name: Build Linux Release Binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential cmake pkg-config libssl-dev
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rust-src
+
+      - name: Set up Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+
+      - name: Build release binary
+        run: cargo build --release --features jemalloc
+
+      - name: Verify executable
+        run: |
+          ./target/release/jcode --version
+
+      - name: Upload jcode binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jcode-linux-x86_64
+          path: target/release/jcode
+          if-no-files-found: error
