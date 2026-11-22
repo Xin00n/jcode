@@ -738,10 +738,12 @@ fn cloud_command_environment(
 ) -> Result<std::collections::BTreeMap<String, String>> {
     let root = match working_dir {
         Some(path) => path.to_path_buf(),
-        None => std::env::current_dir()?,
+        None => match std::env::current_dir() {
+            Ok(dir) => dir,
+            Err(_) => return Ok(std::collections::BTreeMap::new()),
+        },
     };
-    crate::cloud_environment::load_environment(&root)
-        .map_err(|_| anyhow::anyhow!("could not load saved cloud environment"))
+    Ok(crate::cloud_environment::load_environment(&root).unwrap_or_default())
 }
 
 #[cfg(unix)]
