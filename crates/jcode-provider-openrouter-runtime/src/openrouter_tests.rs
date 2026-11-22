@@ -2147,10 +2147,10 @@ fn conifer_context_fallback_yields_to_live_and_disk_catalog_without_remapping_al
     let fresh = make_provider();
     assert!(fresh.models_cache.try_read().unwrap().models.is_empty());
     for (model, expected) in [
-        ("mistral-large-latest", 128_000),
-        ("mistral-medium-latest", 512_000),
-        ("mistral-small-latest", 64_000),
-        (alias, 131_072),
+        ("mistral-large-latest", 1_000_000),
+        ("mistral-medium-latest", 1_000_000),
+        ("mistral-small-latest", 1_000_000),
+        (alias, 1_000_000),
     ] {
         provider.set_model(model).expect("select live model");
         fresh

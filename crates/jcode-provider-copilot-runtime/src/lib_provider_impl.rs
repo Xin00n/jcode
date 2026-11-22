@@ -182,7 +182,7 @@ impl Provider for CopilotApiProvider {
 
     fn context_window(&self) -> usize {
         jcode_provider_core::context_limit_for_model_with_provider(&self.model(), Some(self.name()))
-            .unwrap_or(128_000)
+            .unwrap_or(1_000_000)
     }
 
     fn fork(&self) -> Arc<dyn Provider> {

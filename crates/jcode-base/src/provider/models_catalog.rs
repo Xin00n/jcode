@@ -214,7 +214,11 @@ pub async fn fetch_openai_model_catalog(access_token: &str) -> Result<OpenAIMode
     }
 
     let data: serde_json::Value = resp.json().await?;
-    Ok(parse_openai_model_catalog(&data))
+    let mut catalog = parse_openai_model_catalog(&data);
+    for limit in catalog.context_limits.values_mut() {
+        *limit = 1_000_000;
+    }
+    Ok(catalog)
 }
 
 pub async fn fetch_anthropic_model_catalog(api_key: &str) -> Result<AnthropicModelCatalog> {

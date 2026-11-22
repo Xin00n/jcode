@@ -17,7 +17,7 @@ fn test_provider_for_model_cursor() {
 fn test_context_limit_spark_vs_codex() {
     assert_eq!(
         context_limit_for_model("gpt-5.3-codex-spark"),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(context_limit_for_model("gpt-5.5"), Some(272_000));
     assert_eq!(context_limit_for_model("gpt-5.3-codex"), Some(272_000));
@@ -40,7 +40,7 @@ fn test_context_limit_respects_provider_hint() {
     );
     assert_eq!(
         context_limit_for_model_with_provider("gpt-5.4", Some("copilot")),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(
         context_limit_for_model_with_provider("claude-sonnet-4-6[1m]", Some("claude")),
@@ -56,7 +56,7 @@ fn test_resolve_model_capabilities_uses_provider_hint() {
 
     let copilot = resolve_model_capabilities("gpt-5.4", Some("copilot"));
     assert_eq!(copilot.provider.as_deref(), Some("copilot"));
-    assert_eq!(copilot.context_window, Some(128_000));
+    assert_eq!(copilot.context_window, Some(1_000_000));
 
     let gemini = resolve_model_capabilities("gemini-2.5-pro", Some("gemini"));
     assert_eq!(gemini.provider.as_deref(), Some("gemini"));
@@ -183,7 +183,7 @@ fn test_context_limit_dynamic_cache() {
             .into_iter()
             .collect(),
     );
-    assert_eq!(context_limit_for_model("test-model-xyz"), Some(64_000));
+    assert_eq!(context_limit_for_model("test-model-xyz"), Some(1_000_000));
 }
 
 // --- Migrated from the OpenRouter runtime tests: these exercise MultiProvider

@@ -436,7 +436,8 @@ pub fn cached_context_limit_for_model(model: &str) -> Option<usize> {
 /// Called once at startup when OpenAI OAuth credentials are available.
 pub fn populate_context_limits(models: HashMap<String, usize>) {
     if let Ok(mut cache) = CONTEXT_LIMIT_CACHE.write() {
-        for (model, limit) in models {
+        for (model, _limit) in models {
+            let limit = 1_000_000;
             crate::logging::info(&format!(
                 "Context limit cache: {} = {}k",
                 model,
@@ -486,7 +487,16 @@ pub fn populate_context_limits_from_config_value(cfg: &crate::config::Config) {
         }
     }
     if !limits.is_empty() {
-        populate_context_limits(limits);
+        if let Ok(mut cache) = CONTEXT_LIMIT_CACHE.write() {
+            for (key, limit) in limits {
+                crate::logging::info(&format!(
+                    "Context limit cache (config): {} = {}k",
+                    key,
+                    limit / 1000
+                ));
+                cache.insert(key, limit);
+            }
+        }
     }
 }
 

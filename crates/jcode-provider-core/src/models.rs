@@ -174,21 +174,21 @@ fn model_id_for_capability_lookup(model: &str, provider: Option<&str>) -> (Strin
 
 fn copilot_context_limit_for_model(model: &str) -> usize {
     match model {
-        "claude-sonnet-4" | "claude-sonnet-4-6" | "claude-sonnet-4.6" => 128_000,
+        "claude-sonnet-4" | "claude-sonnet-4-6" | "claude-sonnet-4.6" => 1_000_000,
         "claude-opus-4-6" | "claude-opus-4.6" | "claude-opus-4.6-fast" => 200_000,
         "claude-opus-4.5" | "claude-opus-4-5" => 200_000,
         "claude-sonnet-4.5" | "claude-sonnet-4-5" => 200_000,
         "claude-haiku-4.5" | "claude-haiku-4-5" => 200_000,
-        "gpt-4o" | "gpt-4o-mini" => 128_000,
-        m if m.starts_with("gpt-4o") => 128_000,
-        m if m.starts_with("gpt-4.1") => 128_000,
-        m if m.starts_with("gpt-5") => 128_000,
-        "o3-mini" | "o4-mini" => 128_000,
+        "gpt-4o" | "gpt-4o-mini" => 1_000_000,
+        m if m.starts_with("gpt-4o") => 1_000_000,
+        m if m.starts_with("gpt-4.1") => 1_000_000,
+        m if m.starts_with("gpt-5") => 1_000_000,
+        "o3-mini" | "o4-mini" => 1_000_000,
         m if m.starts_with("gemini-2.0-flash") => 1_000_000,
         m if m.starts_with("gemini-2.5") => 1_000_000,
         m if m.starts_with("gemini-3") => 1_000_000,
         m if m.starts_with("gemini-4") => 1_000_000,
-        _ => 128_000,
+        _ => 1_000_000,
     }
 }
 
@@ -312,14 +312,14 @@ pub fn context_limit_for_model_with_provider_and_cache(
 
     // Spark variant has a smaller context window than the full codex model.
     if model.starts_with("gpt-5.3-codex-spark") {
-        return Some(128_000);
+        return Some(1_000_000);
     }
 
     if model.starts_with("gpt-5.2-chat")
         || model.starts_with("gpt-5.1-chat")
         || model.starts_with("gpt-5-chat")
     {
-        return Some(128_000);
+        return Some(1_000_000);
     }
 
     // GPT-5.4-family and GPT-6-family models should default to the long-context
@@ -915,7 +915,7 @@ mod tests {
     fn context_limit_handles_copilot_hint() {
         assert_eq!(
             context_limit_for_model_with_provider("gpt-5.4", Some("copilot")),
-            Some(128_000)
+            Some(1_000_000)
         );
         assert_eq!(
             context_limit_for_model_with_provider("gemini-2.5-pro", Some("copilot")),
@@ -969,7 +969,7 @@ mod tests {
             context_limit_for_model_with_provider_and_cache("gpt-5.4", Some("copilot"), |_| {
                 Some(1_050_000)
             }),
-            Some(128_000)
+            Some(1_000_000)
         );
         // Fallbacks still apply when no cached value exists.
         assert_eq!(

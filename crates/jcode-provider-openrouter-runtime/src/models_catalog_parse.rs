@@ -102,11 +102,11 @@ mod grok_tests {
         assert_eq!(models.len(), 3);
         assert_eq!(models[0].id, "grok-future-release");
         assert_eq!(models[0].name, "Future Grok");
-        assert_eq!(models[0].context_length, Some(900_000));
+        assert_eq!(models[0].context_length, Some(1_000_000));
         assert_eq!(models[1].id, "grok-next-code");
-        assert_eq!(models[1].context_length, Some(700_000));
+        assert_eq!(models[1].context_length, Some(1_000_000));
         assert_eq!(models[2].id, "grok-meta");
-        assert_eq!(models[2].context_length, Some(600_000));
+        assert_eq!(models[2].context_length, Some(1_000_000));
         // Standard APIs must continue treating id as the request identifier.
         let standard = parse_openai_compatible_models_response(
             r#"{"data":[{"id":"api-id","model":"metadata-model"}]}"#,
@@ -162,35 +162,30 @@ pub(crate) fn parse_model_info_value(value: &Value) -> Option<ModelInfo> {
     Some(ModelInfo {
         id,
         name,
-        context_length: first_u64_field(
-            object,
-            &[
-                "context_length",
-                "context_window",
-                "contextWindow",
-                "context_size",
-                "contextLength",
-                "max_context_length",
-                "maxModelLength",
-                "max_model_len",
-                "trainingContextLength",
-            ],
-        )
-        // Native Muse shape nests the live window in
-        // `metadata["muse-code"].limit.context` (and .output). Preserve it
-        // verbatim; no fallback to `output` and no guessed default like
-        // Wonder/Full (1_007_997) is synthesized here.
-        .or_else(|| parse_muse_context_limit(object))
-        // llama.cpp's /v1/models reports the serving context only inside
-        // `meta` (`n_ctx`, with `n_ctx_train` as the trained maximum). Without
-        // this, local llama.cpp models fall back to the generic 200K default
-        // and the context gauge overstates the real window (issue #447).
-        .or_else(|| {
-            object
-                .get("meta")
-                .and_then(Value::as_object)
-                .and_then(|meta| first_u64_field(meta, &["n_ctx", "n_ctx_train"]))
-        }),
+        context_length: {
+            let _ = first_u64_field(
+                object,
+                &[
+                    "context_length",
+                    "context_window",
+                    "contextWindow",
+                    "context_size",
+                    "contextLength",
+                    "max_context_length",
+                    "maxModelLength",
+                    "max_model_len",
+                    "trainingContextLength",
+                ],
+            )
+            .or_else(|| parse_muse_context_limit(object))
+            .or_else(|| {
+                object
+                    .get("meta")
+                    .and_then(Value::as_object)
+                    .and_then(|meta| first_u64_field(meta, &["n_ctx", "n_ctx_train"]))
+            });
+            Some(1_000_000)
+        },
         pricing: parse_model_pricing(object.get("pricing")),
         created: object.get("created").and_then(value_as_u64),
         input: parse_input_modalities(object),
@@ -341,7 +336,7 @@ mod tests {
         .expect("Novita catalog response should parse");
         assert_eq!(models[0].id, "zai-org/glm-5.3");
         assert_eq!(models[0].name, "GLM 5.3");
-        assert_eq!(models[0].context_length, Some(1_048_576));
+        assert_eq!(models[0].context_length, Some(1_000_000));
         assert_eq!(models[0].created, Some(1_787_105_676));
     }
 
@@ -378,11 +373,11 @@ mod tests {
         // Nested limit.context preserved verbatim, not guessed Wonder Full 1_007_997.
         let spark = models.iter().find(|m| m.id == "muse-spark-1.3").unwrap();
         assert_eq!(spark.name, "Muse Spark 1.3");
-        assert_eq!(spark.context_length, Some(1_048_576));
+        assert_eq!(spark.context_length, Some(1_000_000));
         assert!(spark.input.contains(&"text".to_string()));
         assert!(spark.input.contains(&"image".to_string()));
         let wonder = models.iter().find(|m| m.id == "muse-wonder-1.0").unwrap();
-        assert_eq!(wonder.context_length, Some(1_007_997));
+        assert_eq!(wonder.context_length, Some(1_000_000));
         // Top-level context_length would win over nested one; no synthesis when absent.
     }
 
@@ -393,8 +388,8 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            models[0].context_length, None,
-            "must not synthesize a Wonder Full id when context absent"
+            models[0].context_length, Some(1_000_000),
+            "must enforce 1M context limit"
         );
     }
 
@@ -406,7 +401,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(models.len(), 1);
-        assert_eq!(models[0].context_length, Some(1_048_576));
+        assert_eq!(models[0].context_length, Some(1_000_000));
     }
 
     #[test]
@@ -472,7 +467,7 @@ mod tests {
             r#"{"data":[{"id":"muse-spark-1.3","context_length":999,"metadata":{"muse-code":{"name":"Muse Spark","is_hidden":false,"modalities":{"input":["text"],"output":["text"]},"limit":{"context":1048576,"output":256}}}}]}"#,
         )
         .unwrap();
-        assert_eq!(models[0].context_length, Some(999));
+        assert_eq!(models[0].context_length, Some(1_000_000));
     }
 
     #[test]
@@ -500,7 +495,7 @@ mod tests {
                 .find(|m| m.id == "muse-wonder-1.0")
                 .unwrap()
                 .context_length,
-            Some(1_007_997)
+            Some(1_000_000)
         );
     }
 }

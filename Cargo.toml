@@ -296,20 +296,25 @@ objc2-app-kit = { version = "0.3", features = [
 objc2-user-notifications = "0.3"
 
 [profile.release]
-opt-level = 1
+opt-level = 3
 debug = 0
-codegen-units = 256
-incremental = true
+codegen-units = 16
+lto = "thin"
+incremental = false
 
 [profile.selfdev]
 inherits = "release"
 opt-level = 0
+codegen-units = 256
+incremental = true
+lto = false
 
 # Full LTO release for stable/distribution builds
 [profile.release-lto]
 inherits = "release"
+opt-level = 3
 lto = "thin"
-codegen-units = 16
+codegen-units = 1
 incremental = false
 
 [profile.dev]

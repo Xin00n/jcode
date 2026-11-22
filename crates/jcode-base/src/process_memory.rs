@@ -599,7 +599,7 @@ pub fn release_retained_heap_debounced(reason: &str, min_interval: std::time::Du
 }
 
 /// Default apparent-retention growth threshold that triggers a background trim.
-pub const DEFAULT_RETENTION_TRIM_THRESHOLD_BYTES: u64 = 64 * 1024 * 1024;
+pub const DEFAULT_RETENTION_TRIM_THRESHOLD_BYTES: u64 = 32 * 1024 * 1024;
 
 /// Post-trim apparent-retention baseline (bytes). Updated after every
 /// [`release_retained_heap`] and ratcheted down when current apparent

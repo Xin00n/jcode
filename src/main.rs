@@ -6,24 +6,24 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 // and unloading an ~87 MB ONNX embedding model). The defaults (muzzy_decay_ms:0,
 // retain:true, narenas:8*ncpu) caused 1.4 GB RSS in previous testing.
 //
-// dirty_decay_ms:1000  — return dirty pages to OS after 1 s idle
-// muzzy_decay_ms:1000  — release muzzy pages after 1 s
-// narenas:4            — limit arena count (17 threads don't need 64 arenas)
+// dirty_decay_ms:0     — return dirty pages to OS immediately
+// muzzy_decay_ms:0     — release muzzy pages immediately
+// narenas:2            — limit arena count to 2 to minimize fragmentation and overhead
 // prof:true            — enable profiling support in jemalloc-prof builds
 // prof_active:false    — keep sampling disabled until explicitly enabled at runtime
 #[cfg(all(feature = "jemalloc", not(feature = "jemalloc-prof")))]
 // jemalloc reads this exact exported symbol name at startup.
 #[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]
-pub static malloc_conf: Option<&'static [u8; 50]> =
-    Some(b"dirty_decay_ms:1000,muzzy_decay_ms:1000,narenas:4\0");
+pub static malloc_conf: Option<&'static [u8; 44]> =
+    Some(b"dirty_decay_ms:0,muzzy_decay_ms:0,narenas:2\0");
 
 #[cfg(feature = "jemalloc-prof")]
 // jemalloc reads this exact exported symbol name at startup.
 #[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]
-pub static malloc_conf: Option<&'static [u8; 78]> =
-    Some(b"dirty_decay_ms:1000,muzzy_decay_ms:1000,narenas:4,prof:true,prof_active:false\0");
+pub static malloc_conf: Option<&'static [u8; 72]> =
+    Some(b"dirty_decay_ms:0,muzzy_decay_ms:0,narenas:2,prof:true,prof_active:false\0");
 
 use anyhow::Result;
 
@@ -36,7 +36,7 @@ fn configure_system_allocator() {
     const M_ARENA_MAX: i32 = -8;
     const M_MMAP_THRESHOLD: i32 = -3;
 
-    let arena_max = parse_alloc_tuning_env("JCODE_GLIBC_ARENA_MAX", 4);
+    let arena_max = parse_alloc_tuning_env("JCODE_GLIBC_ARENA_MAX", 2);
     let _ = unsafe { mallopt(M_ARENA_MAX, arena_max) };
 
     // Pin the mmap threshold so large transient allocations (history JSON,
@@ -51,7 +51,7 @@ fn configure_system_allocator() {
     // alloc/free cycles (mmap/munmap syscalls + page faults each time) for
     // predictable, immediate memory return. For a long-running interactive
     // agent, lower steady-state RSS wins.
-    let mmap_threshold = parse_alloc_tuning_env("JCODE_GLIBC_MMAP_THRESHOLD", 256 * 1024);
+    let mmap_threshold = parse_alloc_tuning_env("JCODE_GLIBC_MMAP_THRESHOLD", 64 * 1024);
     let _ = unsafe { mallopt(M_MMAP_THRESHOLD, mmap_threshold) };
 }
 

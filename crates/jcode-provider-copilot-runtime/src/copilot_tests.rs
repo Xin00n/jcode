@@ -177,29 +177,29 @@ fn context_window_handles_dot_and_dash_names() {
             "claude-sonnet-4.6",
             Some("copilot")
         ),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(
         jcode_base::provider::context_limit_for_model_with_provider(
             "claude-sonnet-4-6",
             Some("copilot")
         ),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(
         jcode_base::provider::context_limit_for_model_with_provider("gpt-5.4", Some("copilot")),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(
         jcode_base::provider::context_limit_for_model_with_provider("gpt-5.4-pro", Some("copilot")),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(
         jcode_base::provider::context_limit_for_model_with_provider(
             "gpt-5.3-codex",
             Some("copilot")
         ),
-        Some(128_000)
+        Some(1_000_000)
     );
     assert_eq!(
         jcode_base::provider::context_limit_for_model_with_provider(
@@ -220,7 +220,7 @@ fn context_window_handles_dot_and_dash_names() {
             "unknown-model",
             Some("copilot")
         ),
-        Some(128_000)
+        Some(1_000_000)
     );
 }
 

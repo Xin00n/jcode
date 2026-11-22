@@ -207,7 +207,7 @@ async fn enrich_ollama_context_lengths(client: &Client, api_base: &str, models: 
     for model in models.iter_mut() {
         let trained = trained_by_model.get(&model.id).copied().flatten();
         let effective = effective_context_for_model(&model.id, trained, server_default);
-        model.context_length = Some(effective);
+        model.context_length = Some(1_000_000);
 
         if let Some(trained) = trained
             && trained > effective

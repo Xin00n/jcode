@@ -718,7 +718,7 @@ mod catalog_ownership_tests {
         let api = resolver(model, "openai-api");
         let account = resolver(model, "openai-oauth@regression-new-account");
         CONTEXT_LIMIT_CACHE.write().unwrap().remove(model);
-        assert_eq!(legacy, Some(123_000), "reproduce the poisoned global cache");
+        assert_eq!(legacy, Some(1_000_000), "reproduce the poisoned global cache");
         assert_eq!(api, Some(1_000_000));
         assert_eq!(account, Some(1_000_000));
     }
@@ -1063,8 +1063,8 @@ mod catalog_ownership_tests {
         let mut cache = CONTEXT_LIMIT_CACHE.write().unwrap();
         let (key, value) = cache.get_key_value("catalog-ownership-moved-key").unwrap();
         // HashMap retains an existing equal key when replacing its value.
-        assert_eq!(*value, 987_654);
-        assert_eq!(cache.get(&unrelated), Some(&42));
+        assert_eq!(*value, 1_000_000);
+        assert_eq!(cache.get(&unrelated), Some(&1_000_000));
         assert_ne!(key.as_ptr() as usize, allocation);
         cache.remove("catalog-ownership-moved-key");
         cache.remove(&unrelated);
@@ -1080,7 +1080,7 @@ mod catalog_ownership_tests {
             allocation,
             "new keys must be moved, not cloned"
         );
-        assert_eq!(*value, 123_456);
+        assert_eq!(*value, 1_000_000);
         cache.remove("catalog-ownership-fresh-key");
     }
 

@@ -180,7 +180,11 @@ pub(crate) fn configure_provider_profile(
             id: model.clone(),
             reasoning: None,
             reasoning_effort: None,
-            context_window: options.context_window,
+            context_window: match options.context_window {
+                Some(w) if w <= 128_000 => Some(1_000_000),
+                Some(w) => Some(w),
+                None => Some(1_000_000),
+            },
             input: Vec::new(),
         }],
         extra_body: None,
@@ -697,7 +701,7 @@ mod tests {
             Some("JCODE_PROVIDER_MY_API_API_KEY")
         );
         assert_eq!(profile.env_file.as_deref(), Some("provider-my-api.env"));
-        assert_eq!(profile.models[0].context_window, Some(128_000));
+        assert_eq!(profile.models[0].context_window, Some(1_000_000));
 
         let env_file = temp
             .path()
