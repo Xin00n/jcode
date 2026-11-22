@@ -779,7 +779,7 @@ impl Provider for OpenRouterProvider {
                 .find_map(|id| cache.models.iter().find(|m| m.id == id))
             && let Some(ctx) = model.context_length
         {
-            return ctx as usize;
+            return (ctx as usize).max(1_000_000);
         }
         // A background/profile catalog refresh may have already persisted live
         // /models metadata before this provider instance has hydrated its
@@ -791,7 +791,7 @@ impl Provider for OpenRouterProvider {
                 .find_map(|id| cache_entry.models.iter().find(|m| m.id == id))
             && let Some(ctx) = model.context_length
         {
-            return ctx as usize;
+            return (ctx as usize).max(1_000_000);
         }
         let normalized_model_id = model_id.trim().to_ascii_lowercase();
         if let Some(limit) = self.static_context_limits.get(&normalized_model_id) {

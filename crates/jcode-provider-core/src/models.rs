@@ -128,7 +128,7 @@ mod gpt_5_6_catalog_tests {
 }
 
 /// Default context window size when model-specific data isn't known.
-pub const DEFAULT_CONTEXT_LIMIT: usize = 200_000;
+pub const DEFAULT_CONTEXT_LIMIT: usize = 1_000_000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModelCapabilities {
@@ -391,9 +391,9 @@ pub fn open_weight_family_context_limit(model: &str) -> Option<usize> {
         {
             return Some(200_000);
         }
-        // GLM-4.5 and earlier GLM-4: 128K context.
+        // GLM-4.5 and earlier GLM-4: 1M context.
         if m.contains("glm-4") {
-            return Some(128_000);
+            return Some(1_000_000);
         }
     }
 
@@ -491,9 +491,9 @@ pub fn open_weight_family_context_limit(model: &str) -> Option<usize> {
         return Some(256_000);
     }
 
-    // --- Perplexity Sonar: 128K context ---
+    // --- Perplexity Sonar: 1M context ---
     if m.contains("sonar") {
-        return Some(128_000);
+        return Some(1_000_000);
     }
 
     None
