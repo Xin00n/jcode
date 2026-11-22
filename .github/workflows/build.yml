@@ -18,8 +18,18 @@ env:
 
 jobs:
   build:
-    name: Build Linux Release Binary
-    runs-on: ubuntu-latest
+    name: Build Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            artifact: jcode-linux-x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+            artifact: jcode-linux-aarch64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,6 +47,7 @@ jobs:
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@v2
         with:
+          key: ${{ matrix.arch }}
           cache-all-crates: "true"
 
       - name: Build release binary
@@ -49,6 +60,6 @@ jobs:
       - name: Upload jcode binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jcode-linux-x86_64
+          name: ${{ matrix.artifact }}
           path: target/release/jcode
           if-no-files-found: error
