@@ -68,11 +68,11 @@ jobs:
       - name: Build release binary
         run: |
           if [ -n "${{ matrix.target }}" ]; then
-            # aarch64-unknown-linux-musl ships rustup std, so no build-std needed.
             export CC_aarch64_unknown_linux_musl=musl-gcc
             export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
-            cargo build --release --features jemalloc -j 4 \
-              --target ${{ matrix.target }}
+            # jemalloc cannot build against musl (needs glibc C11 atomics), so
+            # the musl binary uses the system allocator instead.
+            cargo build --release -j 4 --target ${{ matrix.target }}
           else
             cargo build --release --features jemalloc -j 4
           fi
