@@ -72,7 +72,10 @@ jobs:
             export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
             # jemalloc cannot build against musl (needs glibc C11 atomics), so
             # the musl binary uses the system allocator instead.
-            cargo build --release -j 4 --target ${{ matrix.target }}
+            # linux-compat-vendored-openssl builds OpenSSL from source for the
+            # musl target, which has no system libssl.
+            cargo build --release -j 4 --features linux-compat-vendored-openssl \
+              --target ${{ matrix.target }}
           else
             cargo build --release --features jemalloc -j 4
           fi
