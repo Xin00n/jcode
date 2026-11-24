@@ -614,11 +614,21 @@ pub(super) async fn handle_client(
                     None => std::future::pending::<()>().await,
                 }
             }, if client_subscribed => {
-                let Some(catalog) = try_available_models_catalog_offloaded(&agent).await else {
-                    model_catalog_retry.busy();
-                    continue;
+                let catalog = match super::available_models_cache::try_for_agent(&agent, |_| ()).await {
+                    Ok(Some((catalog, ()))) => {
+                        model_catalog_retry.complete();
+                        catalog
+                    }
+                    Ok(None) => {
+                        model_catalog_retry.busy();
+                        continue;
+                    }
+                    Err(error) => {
+                        crate::logging::warn(&format!("Model catalog build task failed: {error}"));
+                        model_catalog_retry.complete();
+                        continue;
+                    }
                 };
-                model_catalog_retry.complete();
                 if !last_available_models_snapshot.as_ref().is_some_and(|previous| {
                     Arc::ptr_eq(previous, &catalog.dedup_key)
                         || previous.as_ref() == catalog.dedup_key.as_ref()
