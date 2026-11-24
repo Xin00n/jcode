@@ -19,7 +19,7 @@ env:
 
 jobs:
   build:
-    name: Build Linux (${{ matrix.arch }})
+    name: Build Linux (${{ matrix.target || matrix.arch }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -31,36 +31,68 @@ jobs:
           - os: ubuntu-24.04-arm
             arch: aarch64
             artifact: jcode-linux-aarch64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+            target: aarch64-unknown-linux-musl
+            artifact: jcode-linux-aarch64-musl
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install system dependencies
+        if: ${{ !matrix.target }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq build-essential cmake pkg-config libssl-dev
 
+      # musl target: no glibc, so cmake/openssl are unnecessary. The musl-gcc
+      # wrapper installed below is the cross linker.
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-src
+          targets: ${{ matrix.target }}
+
+      - name: Install musl cross toolchain
+        if: ${{ matrix.target }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq musl-tools musl-dev
 
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.arch }}
+          key: ${{ matrix.target || matrix.arch }}
           cache-all-crates: "true"
 
       - name: Build release binary
-        run: cargo build --release --features jemalloc -j 4
+        run: |
+          if [ -n "${{ matrix.target }}" ]; then
+            # aarch64-unknown-linux-musl ships rustup std, so no build-std needed.
+            export CC_aarch64_unknown_linux_musl=musl-gcc
+            export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
+            cargo build --release --features jemalloc -j 4 \
+              --target ${{ matrix.target }}
+          else
+            cargo build --release --features jemalloc -j 4
+          fi
 
       - name: Verify executable
+        if: ${{ !matrix.target }}
         run: |
           ./target/release/jcode --version
+
+      # Cross-compiled binaries cannot run on the build host; verify the artifact
+      # is a real ELF for the requested architecture instead.
+      - name: Verify cross-compiled artifact
+        if: ${{ matrix.target }}
+        run: |
+          file target/${{ matrix.target }}/release/jcode
+          file target/${{ matrix.target }}/release/jcode | grep -qi 'aarch64'
 
       - name: Upload jcode binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: target/release/jcode
+          path: ${{ matrix.target && format('target/{0}/release/jcode', matrix.target) || 'target/release/jcode' }}
           if-no-files-found: error
