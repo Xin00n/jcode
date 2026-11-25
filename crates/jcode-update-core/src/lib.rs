@@ -139,11 +139,23 @@ pub fn update_estimate(summary: String, duration: Duration) -> UpdateEstimate {
 }
 
 pub fn get_asset_name() -> &'static str {
+    // Static musl builds (Alpine, Termux, any non-glibc aarch64 Linux) must not
+    // self-update into a glibc binary: the dynamic linker is absent there, so the
+    // replacement would fail to start. Releases publish musl as a separate asset
+    // for manual install instead.
+    #[cfg(all(target_os = "linux", target_arch = "aarch64", target_env = "musl"))]
+    {
+        "jcode-unknown"
+    }
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
         "jcode-linux-x86_64"
     }
-    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    #[cfg(all(
+        target_os = "linux",
+        target_arch = "aarch64",
+        not(target_env = "musl")
+    ))]
     {
         "jcode-linux-aarch64"
     }
@@ -165,7 +177,11 @@ pub fn get_asset_name() -> &'static str {
     }
     #[cfg(not(any(
         all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64"),
+        all(
+            target_os = "linux",
+            target_arch = "aarch64",
+            not(target_env = "musl")
+        ),
         all(target_os = "macos", target_arch = "x86_64"),
         all(target_os = "macos", target_arch = "aarch64"),
         all(target_os = "windows", target_arch = "x86_64"),
