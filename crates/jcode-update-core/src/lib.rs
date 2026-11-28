@@ -145,7 +145,7 @@ pub fn get_asset_name() -> &'static str {
     // for manual install instead.
     #[cfg(all(target_os = "linux", target_arch = "aarch64", target_env = "musl"))]
     {
-        "jcode-unknown"
+        return "jcode-unknown";
     }
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
