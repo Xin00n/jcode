@@ -35,6 +35,22 @@ jobs:
             arch: aarch64
             target: aarch64-unknown-linux-musl
             artifact: jcode-linux-aarch64-musl
+          - os: ubuntu-latest
+            arch: x86_64
+            target: x86_64-unknown-linux-musl
+            artifact: jcode-linux-x86_64-musl
+          - os: macos-13
+            arch: x86_64
+            artifact: jcode-macos-x86_64
+          - os: macos-14
+            arch: aarch64
+            artifact: jcode-macos-aarch64
+          - os: windows-latest
+            arch: x86_64
+            artifact: jcode-windows-x86_64.exe
+          - os: windows-11-arm
+            arch: aarch64
+            artifact: jcode-windows-aarch64.exe
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,6 +86,10 @@ jobs:
           if [ -n "${{ matrix.target }}" ]; then
             export CC_aarch64_unknown_linux_musl=musl-gcc
             export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
+            if [ "${{ matrix.arch }}" = x86_64 ]; then
+              export CC_x86_64_unknown_linux_musl=musl-gcc
+              export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
+            fi
             # jemalloc cannot build against musl (needs glibc C11 atomics), so
             # the musl binary uses the system allocator instead.
             # linux-compat-vendored-openssl builds OpenSSL from source for the
@@ -91,7 +111,7 @@ jobs:
         if: ${{ matrix.target }}
         run: |
           file target/${{ matrix.target }}/release/jcode
-          file target/${{ matrix.target }}/release/jcode | grep -qi 'aarch64'
+          file target/${{ matrix.target }}/release/jcode | grep -qi '${{ matrix.arch }}'
 
       - name: Upload jcode binary artifact
         uses: actions/upload-artifact@v4
