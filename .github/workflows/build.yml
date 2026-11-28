@@ -82,6 +82,7 @@ jobs:
           cache-all-crates: "true"
 
       - name: Build release binary
+        shell: bash
         run: |
           if [ -n "${{ matrix.target }}" ]; then
             export CC_aarch64_unknown_linux_musl=musl-gcc
