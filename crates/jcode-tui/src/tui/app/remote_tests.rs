@@ -574,6 +574,24 @@ fn startup_history(session_id: &str) -> ServerEvent {
 }
 
 #[test]
+fn empty_bootstrap_requests_catalog_without_refresh_command() {
+    let mut app = create_test_app();
+    app.is_remote = true;
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _guard = rt.enter();
+    let mut remote = crate::tui::backend::RemoteConnection::dummy();
+    handle_server_event(&mut app, startup_history("cold"), &mut remote);
+    assert!(std::mem::take(&mut app.model_catalog_after_history));
+
+    let mut reply = startup_history("cold");
+    if let ServerEvent::History { is_canary, .. } = &mut reply {
+        *is_canary = None;
+    }
+    handle_server_event(&mut app, reply, &mut remote);
+    assert!(!app.model_catalog_after_history);
+}
+
+#[test]
 fn history_speed_capabilities_are_authoritative_and_identity_scoped() {
     let mut app = create_test_app();
     app.is_remote = true;

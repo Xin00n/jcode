@@ -1933,6 +1933,15 @@ fn handle_server_event_inner(
             let carries_server_identity =
                 server_name.is_some() || server_version.is_some() || is_canary.is_some();
             let authoritative = session_changed || carries_server_identity;
+            // Bootstrap may omit the catalog to meet its first-frame budget.
+            // Queue a read after attach; a catalog-only History must not re-arm it.
+            if authoritative
+                && (session_changed || !remote.has_loaded_history())
+                && app.remote_available_entries.is_empty()
+                && app.remote_model_options.is_empty()
+            {
+                app.model_catalog_after_history = true;
+            }
             if authoritative || !side_panel.pages.is_empty() {
                 app.set_side_panel_snapshot(side_panel);
             }
