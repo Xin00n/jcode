@@ -47,9 +47,11 @@ jobs:
             artifact: jcode-macos-aarch64
           - os: windows-latest
             arch: x86_64
+            target: x86_64-pc-windows-msvc
             artifact: jcode-windows-x86_64.exe
           - os: windows-11-arm
             arch: aarch64
+            target: aarch64-pc-windows-msvc
             artifact: jcode-windows-aarch64.exe
     steps:
       - name: Checkout repository
@@ -97,26 +99,35 @@ jobs:
             # musl target, which has no system libssl.
             cargo build --release -j 4 --features linux-compat-vendored-openssl \
               --target ${{ matrix.target }}
+          elif [ "${{ runner.os }}" = Windows ]; then
+            # MSVC has no jemalloc build support here; use the system allocator.
+            cargo build --release -j 4 --target ${{ matrix.target }}
           else
             cargo build --release --features jemalloc -j 4
           fi
 
       - name: Verify executable
         if: ${{ !matrix.target }}
+        shell: bash
         run: |
           ./target/release/jcode --version
 
       # Cross-compiled binaries cannot run on the build host; verify the artifact
-      # is a real ELF for the requested architecture instead.
+      # is a real binary for the requested architecture instead.
       - name: Verify cross-compiled artifact
         if: ${{ matrix.target }}
+        shell: bash
         run: |
-          file target/${{ matrix.target }}/release/jcode
-          file target/${{ matrix.target }}/release/jcode | grep -qi '${{ matrix.arch }}'
+          bin=target/${{ matrix.target }}/release/jcode
+          if [ "${{ runner.os }}" = Windows ]; then bin="$bin.exe"; fi
+          file "$bin"
+          file "$bin" | grep -qi '${{ matrix.arch }}'
 
       - name: Upload jcode binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.target && format('target/{0}/release/jcode', matrix.target) || 'target/release/jcode' }}
+          path: |
+            target/${{ matrix.target }}/release/jcode*
+            target/release/jcode*
           if-no-files-found: error
